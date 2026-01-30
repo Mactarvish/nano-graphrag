@@ -1,19 +1,24 @@
 import os
 import logging
 import numpy as np
+from dotenv import load_dotenv
 from openai import AsyncOpenAI, OpenAI
 from dataclasses import dataclass
 from nano_graphrag import GraphRAG, QueryParam
 from nano_graphrag.base import BaseKVStorage
 from nano_graphrag._utils import compute_args_hash
 
+import argparse
+
+load_dotenv()
+
 logging.basicConfig(level=logging.WARNING)
 logging.getLogger("nano-graphrag").setLevel(logging.INFO)
 
-GLM_API_KEY = "XXXX"
-DEEPSEEK_API_KEY = "sk-XXXX"
+GLM_API_KEY = os.getenv("GLM_API_KEY")
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
-MODEL = "deepseek-chat"
+MODEL = os.getenv("MODEL", "deepseek-chat")
 
 
 async def deepseepk_model_if_cache(
@@ -100,7 +105,7 @@ def query():
     )
     print(
         rag.query(
-            "What are the top themes in this story?", param=QueryParam(mode="global")
+            "介绍无监督学习的相关概念和应用", param=QueryParam(mode="local")
         )
     )
 
@@ -108,7 +113,7 @@ def query():
 def insert():
     from time import time
 
-    with open("./tests/mock_data.txt", encoding="utf-8-sig") as f:
+    with open("./tests/mock_data_dl.txt", encoding="utf-8-sig") as f:
         FAKE_TEXT = f.read()
 
     remove_if_exist(f"{WORKING_DIR}/vdb_entities.json")
@@ -132,5 +137,11 @@ def insert():
 
 
 if __name__ == "__main__":
-    insert()
-    # query()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--insert", action="store_true")
+    parser.add_argument("--query", action="store_true")
+    args = parser.parse_args()
+    if args.insert:
+        insert()
+    if args.query:
+        query()
